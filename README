@@ -1,0 +1,14 @@
+
+## Ansible Role for basic on new freebsd jail
+####################################################
+
+Simple base role for ansible to create some default configs and install basic software on a jailed server.
+
+- Set locale
+- Configure pkg to use latest
+- Disable ntpd
+- Install some basics (ca_root_nss,zip,unzip,gnu-watch,mc,bash,bash-completion,htop,lsof,rsync,wget,curl,gtar,gawk,pidof,pstree)
+- Change shells for root/toor
+- Configure some base settings (periodic,home permissions...)
+
+NOTE: Tested with freebsd 12.0. This is not a general role valid for all use case, it's specific for my needs. You can add/remove and modify to your needs.

@@ -1,0 +1,74 @@
+- name: Set default locale charset
+  lineinfile:
+    dest: /etc/login.conf
+    insertafter: "^default:\\\\$"
+    line: "\t:charset=es_ES.UTF-8:\\"
+  register: changelogin1
+
+- name: Set default locale lang
+  lineinfile:
+    dest: /etc/login.conf
+    insertafter: "^default:\\\\$"
+    line: "\t:lang=es_ES.UTF-8:\\"
+  register: changelogin2
+
+- name: Update login database
+  command: cap_mkdb /etc/login.conf
+  when: changelogin1.changed or changelogin2.changed
+
+- name: Change pkgs from quartely to latest
+  replace:
+    dest=/etc/pkg/FreeBSD.conf
+    regexp='quarterly'
+    replace='latest'
+
+- name: update pkg database
+  command: pkg update -q
+  register: pkgupdated
+  when: pkgupdated is not defined
+
+- name: stop freebsd ntpd
+  service: name=ntpd enabled=no state=stopped
+
+- name: disable freebsd ntpd
+  command: sysrc ntpd_enable=NO
+  changed_when: false
+
+- name: Install base packages
+  pkgng: name=ca_root_nss,zip,unzip,gnu-watch,mc,bash,bash-completion,htop,lsof,rsync,wget,curl,gtar,gawk,pidof,pstree state=present
+
+- name: shell bash for root
+  command: chsh -s /usr/local/bin/bash root
+  args:
+    creates: /root/.bash_profile
+
+- name: shell sh for toor
+  command: chsh -s /bin/sh toor
+
+- name: random password for toor
+  command: pw mod user toor -w random
+
+- name: bash root config
+  copy: src={{item}} dest=/root/ force=no
+  with_items:
+    - .bashrc
+    - .bash_profile
+
+- name: create mc ini directory
+  file: path=/root/.config/mc state=directory
+
+- name: copy mc ini
+  copy: src=mc.ini
+    dest=/root/.config/mc/ini
+    force=no
+
+- name: Copy periodic conf
+  copy:
+    src: 'periodic.conf'
+    dest: '/etc/periodic.conf'
+
+- name: create local newsyslog.d
+  file: path=/usr/local/etc/newsyslog.conf.d/ state=directory
+
+- name: change home permissions
+  file: path=/usr/home state=directory mode=0111
